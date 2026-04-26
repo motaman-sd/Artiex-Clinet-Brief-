@@ -234,49 +234,70 @@ let briefs = [];
 let activeBriefId = null;
 let isLoading = false;
 
-// ===== LOAD FROM GOOGLE SHEETS VIA JSONP =====
+// ===== LOAD FROM GOOGLE SHEETS VIA GVIZ JSONP =====
+const SHEET_JSON_URL = 'https://docs.google.com/spreadsheets/d/13JFsz0x1CgbhzXaWDHqFaAOSuBTIb57oEPFAIEbDvbM/gviz/tq?tqx=out:json&sheet=Briefs';
+
 function load() {
   if (isLoading) return;
   isLoading = true;
 
   document.getElementById('cards-list').innerHTML = `
     <div class="no-briefs">
-      <div style="font-size:28px;">⟳</div>
+      <div style="font-size:28px;animation:spin 1s linear infinite;display:inline-block;">⟳</div>
       <div style="margin-top:10px;">جاري التحميل...</div>
     </div>`;
 
-  // Remove old script tag if exists
-  const old = document.getElementById('jsonp-script');
+  const old = document.getElementById('gviz-script');
   if (old) old.remove();
 
-  // Set timeout fallback
   const timer = setTimeout(() => {
-    console.warn('JSONP timeout, loading from cache');
+    console.warn('Timeout — loading from cache');
     briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
     briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
     isLoading = false;
     renderStats();
     renderCards();
-  }, 8000);
+  }, 10000);
 
-  // JSONP callback
-  window.__gasCallback = function(data) {
+  window.google = window.google || {};
+  window.google.visualization = window.google.visualization || {};
+  window.google.visualization.Query = window.google.visualization.Query || {};
+
+  window.__sheetCallback = function(resp) {
     clearTimeout(timer);
-    briefs = (data.briefs || []).filter(b => b && b.company);
-    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
-    localStorage.setItem(DB_KEY, JSON.stringify(briefs));
+    try {
+      // gviz returns: google.visualization.Query.setResponse({...})
+      const table = resp.table;
+      const rows = table.rows || [];
+      const cols = table.cols || [];
+      // Last col is JSON string of full brief
+      const lastColIdx = cols.length - 1;
+      briefs = [];
+      rows.forEach(row => {
+        try {
+          const cell = row.c[lastColIdx];
+          if (!cell || !cell.v) return;
+          const b = JSON.parse(cell.v);
+          if (b && b.company) briefs.push(b);
+        } catch(e) {}
+      });
+      briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+      localStorage.setItem(DB_KEY, JSON.stringify(briefs));
+    } catch(e) {
+      console.error('Parse error:', e);
+      briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    }
     isLoading = false;
     renderStats();
     renderCards();
   };
 
-  // Inject script tag for JSONP
   const script = document.createElement('script');
-  script.id = 'jsonp-script';
-  script.src = GAS_URL + '?callback=__gasCallback&t=' + Date.now();
+  script.id = 'gviz-script';
+  script.src = SHEET_JSON_URL + '&tqx=out:json&responseHandler=__sheetCallback&t=' + Date.now();
   script.onerror = function() {
     clearTimeout(timer);
-    console.warn('JSONP failed, loading from cache');
+    console.warn('gviz failed — loading from cache');
     briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
     briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
     isLoading = false;
