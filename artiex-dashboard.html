@@ -234,7 +234,23 @@ let briefs = [];
 let activeBriefId = null;
 let isLoading = false;
 
-// ===== LOAD FROM GOOGLE SHEETS =====
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSBJGwUvlMtc19NrKRmL9FD-p4fV7J5lR8b-nl37xByGykWrodTM96eRbMy_AkNoBuSZUaWJM41x-MP/pub?gid=0&single=true&output=csv';
+
+// Parse CSV row handling quoted fields
+function parseCSVRow(row) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    const c = row[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ===== LOAD FROM GOOGLE SHEETS CSV =====
 async function load() {
   if (isLoading) return;
   isLoading = true;
@@ -246,15 +262,35 @@ async function load() {
     </div>`;
 
   try {
-    const res = await fetch(GAS_URL + '?t=' + Date.now());
-    const json = await res.json();
-    briefs = (json.briefs || []).filter(b => b && b.company);
+    const res = await fetch(CSV_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const lines = text.trim().split('\n').filter(l => l.trim());
+
+    // Last column is JSON of full brief
+    briefs = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVRow(lines[i]);
+      const jsonCol = cols[cols.length - 1].replace(/^"|"$/g, '').replace(/""/g, '"');
+      try {
+        const b = JSON.parse(jsonCol);
+        if (b && b.company) briefs.push(b);
+      } catch(e) {
+        console.warn('Failed to parse row', i, e);
+      }
+    }
     briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
     localStorage.setItem(DB_KEY, JSON.stringify(briefs));
   } catch(e) {
-    console.warn('Failed to fetch from Sheets, using local cache:', e);
+    console.warn('Failed to fetch CSV, using local cache:', e);
     briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
     briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+    document.getElementById('cards-list').innerHTML = `
+      <div class="no-briefs" style="color:#E74C3C;">
+        <div>⚠️ تعذر الاتصال — تم تحميل النسخة المحلية</div>
+      </div>`;
+    setTimeout(() => { renderStats(); renderCards(); }, 800);
+    isLoading = false;
+    return;
   }
 
   isLoading = false;
