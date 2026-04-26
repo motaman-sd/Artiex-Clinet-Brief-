@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artiex – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111;
+  --bg2: #1A1A1A;
+  --bg3: #222;
+  --bg4: #2A2A2A;
+  --cream: #F5F0E8;
+  --red: #C0392B;
+  --red2: #E74C3C;
+  --mid: #666;
+  --mid2: #999;
+  --border: #333;
+  --green: #27AE60;
+  --yellow: #F39C12;
+  --blue: #2980B9;
+  --white: #fff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Cairo','Tajawal',sans-serif; color:var(--cream); min-height:100vh; }
+
+/* HEADER */
+.header {
+  background:var(--bg2); border-bottom:3px solid var(--red);
+  padding:16px 32px; display:flex; justify-content:space-between; align-items:center;
+  position:sticky; top:0; z-index:200;
+}
+.logo { font-size:20px; font-weight:900; color:#fff; direction:ltr; }
+.logo span { color:var(--red); }
+.header-right { display:flex; align-items:center; gap:16px; }
+.badge-count {
+  background:var(--red); color:#fff; font-size:11px; font-weight:900;
+  padding:4px 10px; border-radius:20px; letter-spacing:0.5px;
+}
+.btn-export {
+  background:var(--bg3); color:var(--cream); border:1px solid var(--border);
+  padding:8px 18px; border-radius:3px; font-size:12px; font-weight:700;
+  font-family:'Cairo',sans-serif; cursor:pointer; transition:all .2s; letter-spacing:0.5px;
+}
+.btn-export:hover { background:var(--bg4); border-color:var(--mid); }
+
+/* STATS BAR */
+.stats-bar {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:0 32px; display:flex; gap:0; overflow-x:auto;
+}
+.stat {
+  padding:18px 28px; border-left:1px solid var(--border); flex-shrink:0;
+}
+.stat:first-child { border-left:none; }
+.stat-val { font-size:28px; font-weight:900; color:#fff; line-height:1; }
+.stat-val.red { color:var(--red2); }
+.stat-val.green { color:var(--green); }
+.stat-val.yellow { color:var(--yellow); }
+.stat-lbl { font-size:10px; letter-spacing:2px; color:var(--mid2); text-transform:uppercase; margin-top:5px; direction:ltr; }
+
+/* MAIN LAYOUT */
+.layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 120px); }
+
+/* SIDEBAR */
+.sidebar {
+  background:var(--bg2); border-left:1px solid var(--border);
+  overflow-y:auto; max-height:calc(100vh - 120px); position:sticky; top:120px;
+}
+.sidebar-header {
+  padding:20px 20px 14px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.sidebar-title { font-size:11px; letter-spacing:2.5px; color:var(--mid2); text-transform:uppercase; direction:ltr; }
+.search-input {
+  width:100%; background:var(--bg3); border:1px solid var(--border);
+  border-radius:3px; padding:10px 14px; font-size:13px;
+  font-family:'Cairo',sans-serif; color:var(--cream); outline:none;
+  margin:12px 20px; width:calc(100% - 40px); direction:rtl;
+}
+.search-input:focus { border-color:var(--mid); }
+.search-input::placeholder { color:var(--mid); }
+
+.brief-card {
+  padding:16px 20px; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background .15s; position:relative;
+}
+.brief-card:hover { background:var(--bg3); }
+.brief-card.active { background:var(--bg4); border-right:3px solid var(--red); }
+.brief-card-name { font-size:14px; font-weight:700; color:#fff; margin-bottom:4px; }
+.brief-card-industry { font-size:11px; color:var(--mid2); margin-bottom:6px; }
+.brief-card-meta { display:flex; justify-content:space-between; align-items:center; }
+.brief-date { font-size:10px; color:var(--mid); direction:ltr; }
+.brief-goal-tag {
+  font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  padding:3px 8px; border-radius:2px; background:var(--bg); color:var(--mid2);
+}
+.no-briefs {
+  padding:48px 20px; text-align:center; color:var(--mid);
+  font-size:13px; line-height:1.8;
+}
+.no-briefs .icon { font-size:36px; margin-bottom:12px; }
+
+/* DETAIL PANEL */
+.detail {
+  padding:32px 36px; overflow-y:auto;
+}
+
+.detail-empty {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  height:100%; min-height:400px; gap:14px; color:var(--mid);
+}
+.detail-empty .icon { font-size:48px; opacity:.4; }
+.detail-empty p { font-size:13px; letter-spacing:1px; direction:ltr; text-transform:uppercase; }
+
+/* DETAIL HEADER */
+.detail-head {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  margin-bottom:28px; padding-bottom:24px; border-bottom:1px solid var(--border);
+  flex-wrap:wrap; gap:14px;
+}
+.detail-name { font-size:28px; font-weight:900; color:#fff; }
+.detail-industry { font-size:13px; color:var(--mid2); margin-top:4px; }
+.detail-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.btn-del {
+  background:transparent; color:var(--red2); border:1px solid var(--red);
+  padding:8px 16px; border-radius:3px; font-size:12px; font-weight:700;
+  font-family:'Cairo',sans-serif; cursor:pointer; transition:all .2s;
+}
+.btn-del:hover { background:var(--red); color:#fff; }
+.btn-copy {
+  background:var(--bg3); color:var(--cream); border:1px solid var(--border);
+  padding:8px 16px; border-radius:3px; font-size:12px; font-weight:700;
+  font-family:'Cairo',sans-serif; cursor:pointer; transition:all .2s;
+}
+.btn-copy:hover { background:var(--bg4); }
+
+/* SECTIONS GRID */
+.sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.data-section {
+  background:var(--bg2); border:1px solid var(--border); border-radius:4px;
+  padding:20px; overflow:hidden;
+}
+.data-section.full { grid-column:1/-1; }
+.ds-title {
+  font-size:10px; letter-spacing:2.5px; color:var(--red2); text-transform:uppercase;
+  margin-bottom:16px; direction:ltr; display:flex; align-items:center; gap:8px;
+}
+.ds-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.row { display:flex; flex-direction:column; gap:10px; }
+.field { display:flex; flex-direction:column; gap:3px; }
+.field-label { font-size:10px; letter-spacing:1.5px; color:var(--mid); text-transform:uppercase; direction:ltr; }
+.field-val { font-size:13px; color:var(--cream); line-height:1.7; font-weight:500; }
+.field-val.empty { color:var(--mid); font-style:italic; font-size:12px; }
+
+.tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+.tag {
+  font-size:11px; font-weight:700; padding:4px 10px;
+  border-radius:2px; background:var(--bg4); color:var(--mid2); border:1px solid var(--border);
+}
+.tag.red { background:rgba(192,57,43,.15); color:var(--red2); border-color:var(--red); }
+.tag.green { background:rgba(39,174,96,.12); color:var(--green); border-color:rgba(39,174,96,.3); }
+
+/* SUBMITTED AT */
+.submitted-at {
+  font-size:11px; color:var(--mid); direction:ltr; margin-bottom:20px;
+  padding:10px 14px; background:var(--bg3); border-radius:3px; letter-spacing:0.5px;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .layout { grid-template-columns:1fr; }
+  .sidebar { position:static; max-height:none; border-left:none; border-bottom:1px solid var(--border); }
+  .sections-grid { grid-template-columns:1fr; }
+  .data-section.full { grid-column:1; }
+  .stats-bar { padding:0 16px; }
+  .stat { padding:14px 16px; }
+}
+@media(max-width:600px){
+  .header { padding:14px 18px; }
+  .detail { padding:20px 18px; }
+  .detail-name { font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Artiex<span>.</span> <span style="font-size:11px;color:var(--mid2);font-weight:400;margin-right:10px;letter-spacing:2px;">DASHBOARD</span></div>
+  <div class="header-right">
+    <span class="badge-count" id="total-count">0 بريف</span>
+    <button class="btn-export" onclick="exportJSON()">⬇ تصدير JSON</button>
+    <button class="btn-export" onclick="clearAll()" style="color:var(--yellow);border-color:var(--yellow);">↻ تحديث</button>
+  </div>
+</header>
+
+<!-- STATS -->
+<div class="stats-bar" id="stats-bar">
+  <div class="stat"><div class="stat-val red" id="st-total">0</div><div class="stat-lbl">Total Briefs</div></div>
+  <div class="stat"><div class="stat-val yellow" id="st-this-week">0</div><div class="stat-lbl">This Week</div></div>
+  <div class="stat"><div class="stat-val green" id="st-top-goal">—</div><div class="stat-lbl">Top Goal</div></div>
+  <div class="stat"><div class="stat-val" id="st-top-industry" style="font-size:16px;color:var(--cream);">—</div><div class="stat-lbl">Top Industry</div></div>
+  <div class="stat"><div class="stat-val" id="st-avg-budget" style="font-size:16px;color:var(--cream);">—</div><div class="stat-lbl">Common Budget</div></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">All Briefs</div>
+    </div>
+    <input class="search-input" type="text" id="search" placeholder="🔍 ابحث باسم الشركة..." oninput="filterCards()">
+    <div id="cards-list"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="detail" id="detail-panel">
+    <div class="detail-empty">
+      <div class="icon">📋</div>
+      <p>اختر بريف لعرض تفاصيله</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxUJ4DTJBAGz9-bTbuwN4IzGT08rvMexeU3zN1MZzkyCF4WwTC76wbLgOGMUcPfGPLk/exec';
+const DB_KEY = 'artiex_briefs_db';
+let briefs = [];
+let activeBriefId = null;
+let isLoading = false;
+
+// ===== LOAD FROM GOOGLE SHEETS =====
+async function load() {
+  if (isLoading) return;
+  isLoading = true;
+
+  document.getElementById('cards-list').innerHTML = `
+    <div class="no-briefs">
+      <div style="font-size:28px;">⟳</div>
+      <div style="margin-top:10px;">جاري التحميل...</div>
+    </div>`;
+
+  try {
+    const res = await fetch(GAS_URL + '?t=' + Date.now());
+    const json = await res.json();
+    briefs = (json.briefs || []).filter(b => b && b.company);
+    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+    localStorage.setItem(DB_KEY, JSON.stringify(briefs));
+  } catch(e) {
+    console.warn('Failed to fetch from Sheets, using local cache:', e);
+    briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+  }
+
+  isLoading = false;
+  renderStats();
+  renderCards();
+}
+
+// ===== STATS =====
+function renderStats() {
+  document.getElementById('total-count').textContent = briefs.length + ' بريف';
+  document.getElementById('st-total').textContent = briefs.length;
+
+  // This week
+  const week = 7*24*60*60*1000;
+  const thisWeek = briefs.filter(b => Date.now() - b.id < week).length;
+  document.getElementById('st-this-week').textContent = thisWeek;
+
+  // Top goal
+  const goals = briefs.map(b => b.goals?.main_goal).filter(Boolean);
+  document.getElementById('st-top-goal').textContent = topFreq(goals) || '—';
+
+  // Top industry
+  const inds = briefs.map(b => b.company?.industry).filter(Boolean);
+  document.getElementById('st-top-industry').textContent = topFreq(inds) || '—';
+
+  // Common budget
+  const budgets = briefs.map(b => b.digital?.budget).filter(Boolean);
+  document.getElementById('st-avg-budget').textContent = topFreq(budgets) || '—';
+}
+
+function topFreq(arr) {
+  if (!arr.length) return null;
+  const freq = {};
+  arr.forEach(v => freq[v] = (freq[v]||0)+1);
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+// ===== CARDS =====
+function renderCards(filter='') {
+  const list = document.getElementById('cards-list');
+  const filtered = briefs.filter(b =>
+    !filter || (b.company?.name||'').includes(filter) || (b.company?.industry||'').includes(filter)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="no-briefs"><div class="icon">📭</div>${filter ? 'لا نتائج' : 'لا يوجد بريفات بعد.<br>أرسل الرابط للعميل وانتظر!'}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(b => `
+    <div class="brief-card ${b.id === activeBriefId ? 'active' : ''}" onclick="showBrief(${b.id})">
+      <div class="brief-card-name">${b.company?.name || 'بدون اسم'}</div>
+      <div class="brief-card-industry">${b.company?.industry || '—'} · ${b.market?.biz_model || '—'}</div>
+      <div class="brief-card-meta">
+        <span class="brief-date">${fmtDate(b.submitted_at)}</span>
+        <span class="brief-goal-tag">${b.goals?.main_goal || '—'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterCards() {
+  renderCards(document.getElementById('search').value.trim());
+}
+
+// ===== SHOW DETAIL =====
+function showBrief(id) {
+  activeBriefId = id;
+  renderCards(document.getElementById('search').value.trim());
+
+  const b = briefs.find(br => br.id === id);
+  if (!b) return;
+
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <div class="submitted-at" dir="ltr">📅 Submitted: ${fmtDateFull(b.submitted_at)} &nbsp;|&nbsp; ID: ${b.id}</div>
+
+    <div class="detail-head">
+      <div>
+        <div class="detail-name">${b.company?.name || '—'}</div>
+        <div class="detail-industry">${b.company?.industry || ''} · ${b.company?.age || ''} · ${b.company?.team || ''}</div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-copy" onclick="copyBrief(${b.id})">📋 نسخ JSON</button>
+        <button class="btn-del" onclick="deleteBrief(${b.id})">🗑 حذف</button>
+      </div>
+    </div>
+
+    <div class="sections-grid">
+
+      <!-- شركة -->
+      <div class="data-section full">
+        <div class="ds-title">01 · COMPANY</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Description</div>
+            <div class="field-val">${b.company?.description || '<span class="empty">لم يُذكر</span>'}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="field">
+              <div class="field-label">Services</div>
+              <div class="tags">${(b.company?.services||[]).map(s=>`<span class="tag">${s}</span>`).join('') || '<span class="field-val empty">—</span>'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Markets</div>
+              <div class="tags">${(b.company?.markets||[]).map(m=>`<span class="tag green">${m}</span>`).join('') || '<span class="field-val empty">—</span>'}</div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Structure</div>
+            <div class="field-val">${b.company?.structure || '<span class="empty">—</span>'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- سوق -->
+      <div class="data-section">
+        <div class="ds-title">02 · MARKET</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Competitors</div>
+            <div class="field-val">${b.market?.competitors || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Competitor Strengths</div>
+            <div class="field-val">${b.market?.comp_strengths || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Market Gap</div>
+            <div class="field-val">${b.market?.gap || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Market Size · Biz Model</div>
+            <div class="field-val">${b.market?.market_size||'—'} · <span class="tag red">${b.market?.biz_model||'—'}</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Acquisition Channels</div>
+            <div class="tags">${(b.market?.acquisition||[]).map(a=>`<span class="tag">${a}</span>`).join('') || '<span class="field-val empty">—</span>'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- عميل -->
+      <div class="data-section">
+        <div class="ds-title">03 · CLIENT & SALES</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Age Group · Gender</div>
+            <div class="tags">
+              ${(b.client?.age_group||[]).map(a=>`<span class="tag">${a}</span>`).join('')}
+              ${b.client?.gender ? `<span class="tag red">${b.client.gender}</span>` : ''}
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Pain Points</div>
+            <div class="field-val">${b.client?.pain_points || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Avg Deal · Sales Cycle</div>
+            <div class="field-val">${b.client?.avg_deal||'—'} · ${b.client?.sales_cycle||'—'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Common Objections</div>
+            <div class="tags">${(b.client?.objections||[]).map(o=>`<span class="tag red">${o}</span>`).join('') || '<span class="field-val empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Retention Rate · Case Studies</div>
+            <div class="field-val">${b.client?.retention||'—'} · ${b.client?.case_studies||'—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- رقمي -->
+      <div class="data-section">
+        <div class="ds-title">04 · DIGITAL</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Platforms</div>
+            <div class="tags">${(b.digital?.platforms||[]).map(p=>`<span class="tag green">${p}</span>`).join('') || '<span class="field-val empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Website · Video · Archive</div>
+            <div class="field-val">${b.digital?.website||'—'} · ${b.digital?.video||'—'} · ${b.digital?.archive||'—'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Monthly Budget</div>
+            <div class="field-val">${b.digital?.budget || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Previous Marketing</div>
+            <div class="field-val">${b.digital?.prev_marketing || '<span class="empty">—</span>'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- أهداف -->
+      <div class="data-section">
+        <div class="ds-title">05 · GOALS</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Main Goal</div>
+            <div class="field-val"><span class="tag red">${b.goals?.main_goal||'—'}</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Timeline · KPI</div>
+            <div class="field-val">${b.goals?.timeline||'—'} · ${b.goals?.kpi||'—'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Expansion Plans</div>
+            <div class="field-val">${b.goals?.expansion || '<span class="empty">—</span>'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Extra Notes</div>
+            <div class="field-val">${b.goals?.extra || '<span class="empty">—</span>'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تواصل -->
+      <div class="data-section">
+        <div class="ds-title">CONTACT INFO</div>
+        <div class="row">
+          <div class="field">
+            <div class="field-label">Name</div>
+            <div class="field-val">${b.contact?.name||'—'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Phone / WhatsApp</div>
+            <div class="field-val" dir="ltr">${b.contact?.phone||'—'}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Email</div>
+            <div class="field-val" dir="ltr">${b.contact?.email||'—'}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ===== ACTIONS =====
+function deleteBrief(id) {
+  if (!confirm('تأكيد حذف هذا البريف؟\nملاحظة: الحذف محلي فقط، البيانات تبقى في Google Sheets.')) return;
+  briefs = briefs.filter(b => b.id !== id);
+  activeBriefId = null;
+  document.getElementById('detail-panel').innerHTML = `<div class="detail-empty"><div class="icon">📋</div><p>اختر بريف لعرض تفاصيله</p></div>`;
+  renderStats();
+  renderCards();
+}
+
+function clearAll() {
+  if (!confirm('إعادة تحميل البيانات من Google Sheets؟')) return;
+  load();
+}
+
+function copyBrief(id) {
+  const b = briefs.find(br => br.id === id);
+  navigator.clipboard.writeText(JSON.stringify(b, null, 2));
+  alert('تم نسخ البريف كـ JSON ✓');
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(briefs, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'artiex-briefs-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+}
+
+// ===== UTILS =====
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('ar-EG', {day:'numeric', month:'short', year:'numeric'});
+}
+function fmtDateFull(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+// ===== INIT =====
+load();
+
+// Auto-refresh every 30 seconds from Google Sheets
+setInterval(() => { load(); }, 30000);
+</script>
+</body>
+</html>
