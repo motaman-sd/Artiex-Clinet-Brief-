@@ -263,6 +263,13 @@ function load() {
   window.google.visualization = window.google.visualization || {};
   window.google.visualization.Query = window.google.visualization.Query || {};
 
+  // gviz uses google.visualization.Query.setResponse as default callback
+  window.google = window.google || {};
+  window.google.visualization = window.google.visualization || {};
+  window.google.visualization.Query = window.google.visualization.Query || {};
+  window.google.visualization.Query.setResponse = function(resp) {
+    window.__sheetCallback(resp);
+  };
   window.__sheetCallback = function(resp) {
     clearTimeout(timer);
     try {
@@ -294,7 +301,7 @@ function load() {
 
   const script = document.createElement('script');
   script.id = 'gviz-script';
-  script.src = SHEET_JSON_URL + '&tqx=out:json&responseHandler=__sheetCallback&t=' + Date.now();
+  script.src = SHEET_JSON_URL + '&tqx=out:json;responseHandler:__sheetCallback&t=' + Date.now();
   script.onerror = function() {
     clearTimeout(timer);
     console.warn('gviz failed — loading from cache');
