@@ -234,24 +234,8 @@ let briefs = [];
 let activeBriefId = null;
 let isLoading = false;
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSBJGwUvlMtc19NrKRmL9FD-p4fV7J5lR8b-nl37xByGykWrodTM96eRbMy_AkNoBuSZUaWJM41x-MP/pub?gid=0&single=true&output=csv';
-
-// Parse CSV row handling quoted fields
-function parseCSVRow(row) {
-  const result = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < row.length; i++) {
-    const c = row[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-    else { cur += c; }
-  }
-  result.push(cur.trim());
-  return result;
-}
-
-// ===== LOAD FROM GOOGLE SHEETS CSV =====
-async function load() {
+// ===== LOAD FROM GOOGLE SHEETS VIA JSONP =====
+function load() {
   if (isLoading) return;
   isLoading = true;
 
@@ -261,41 +245,45 @@ async function load() {
       <div style="margin-top:10px;">جاري التحميل...</div>
     </div>`;
 
-  try {
-    const res = await fetch(CSV_URL + '&t=' + Date.now());
-    const text = await res.text();
-    const lines = text.trim().split('\n').filter(l => l.trim());
+  // Remove old script tag if exists
+  const old = document.getElementById('jsonp-script');
+  if (old) old.remove();
 
-    // Last column is JSON of full brief
-    briefs = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCSVRow(lines[i]);
-      const jsonCol = cols[cols.length - 1].replace(/^"|"$/g, '').replace(/""/g, '"');
-      try {
-        const b = JSON.parse(jsonCol);
-        if (b && b.company) briefs.push(b);
-      } catch(e) {
-        console.warn('Failed to parse row', i, e);
-      }
-    }
-    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
-    localStorage.setItem(DB_KEY, JSON.stringify(briefs));
-  } catch(e) {
-    console.warn('Failed to fetch CSV, using local cache:', e);
+  // Set timeout fallback
+  const timer = setTimeout(() => {
+    console.warn('JSONP timeout, loading from cache');
     briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
     briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
-    document.getElementById('cards-list').innerHTML = `
-      <div class="no-briefs" style="color:#E74C3C;">
-        <div>⚠️ تعذر الاتصال — تم تحميل النسخة المحلية</div>
-      </div>`;
-    setTimeout(() => { renderStats(); renderCards(); }, 800);
     isLoading = false;
-    return;
-  }
+    renderStats();
+    renderCards();
+  }, 8000);
 
-  isLoading = false;
-  renderStats();
-  renderCards();
+  // JSONP callback
+  window.__gasCallback = function(data) {
+    clearTimeout(timer);
+    briefs = (data.briefs || []).filter(b => b && b.company);
+    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+    localStorage.setItem(DB_KEY, JSON.stringify(briefs));
+    isLoading = false;
+    renderStats();
+    renderCards();
+  };
+
+  // Inject script tag for JSONP
+  const script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = GAS_URL + '?callback=__gasCallback&t=' + Date.now();
+  script.onerror = function() {
+    clearTimeout(timer);
+    console.warn('JSONP failed, loading from cache');
+    briefs = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    briefs.sort((a, b) => (b.id || 0) - (a.id || 0));
+    isLoading = false;
+    renderStats();
+    renderCards();
+  };
+  document.head.appendChild(script);
 }
 
 // ===== STATS =====
